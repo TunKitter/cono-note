@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useEffect, useRef} from 'react';
@@ -47,7 +46,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({value, onChange}) => {
       ref={editorRef}
       style={{
         fontFamily: 'var(--code-editor-font)',
-        backgroundColor: 'var(--code-editor-background)',
+        backgroundColor: '#505155',
         color: 'var(--code-editor-text)',
       }}
     />
