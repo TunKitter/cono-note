@@ -14,6 +14,12 @@ const CodeEditor = dynamic(() => import('@/components/code-editor'), {
   ssr: false,
 });
 
+declare global {
+  interface Window {
+    [key: string]: any; // Allow access to dynamically created function names
+  }
+}
+
 export default function Home() {
   const [code, setCode] = useState('');
   const [output, setOutput] = useState<string[]>([]);
@@ -46,14 +52,34 @@ export default function Home() {
       setFunctionNames(names);
       const results: string[] = [];
 
+      // Create a global scope for the functions
+      const globalScope: {[key: string]: any} = {};
+      (window as any).globalScope = globalScope;
+
+      // First, define all functions in the global scope
       functions.forEach(func => {
         try {
           // eslint-disable-next-line no-new-func
           const fn = new Function(...func.params, func.body);
-          const result = fn();
-          results.push(String(result));
+          (window as any)[func.name] = fn; // Attach function to window
+          globalScope[func.name] = fn;
         } catch (e: any) {
-          results.push(`Error: ${e.message}`);
+          results.push(`Error defining ${func.name}: ${e.message}`);
+        }
+      });
+
+      // Then, execute each function and store the results
+      functions.forEach(func => {
+        try {
+          const fn = (window as any)[func.name]; // Retrieve the function from window
+          if (typeof fn === 'function') {
+            const result = fn();
+            results.push(String(result));
+          } else {
+            results.push(`Error: ${func.name} is not a function`);
+          }
+        } catch (e: any) {
+          results.push(`Error executing ${func.name}: ${e.message}`);
         }
       });
 
@@ -173,4 +199,3 @@ export default function Home() {
     </div>
   );
 }
-
