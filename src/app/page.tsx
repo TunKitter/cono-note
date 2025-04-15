@@ -6,7 +6,6 @@ import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Textarea} from '@/components/ui/textarea';
 import {useToast} from '@/hooks/use-toast';
-import {generateCodeFromDescription} from '@/ai/flows/generate-code-from-description';
 import {suggestImprovements} from '@/ai/flows/suggest-improvements';
 import {Icons} from '@/components/icons';
 import {
@@ -46,76 +45,24 @@ export default function Home() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [newNoteTitle, setNewNoteTitle] = useState('');
 
-  useEffect(() => {
-    loadNotes();
-  }, []);
-
-  const loadNotes = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'notes'));
-      const loadedNotes: Note[] = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        title: doc.data().title,
-        code: doc.data().code,
-      }));
-      setNotes(loadedNotes);
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error loading notes',
-        description: error.message,
-      });
-    }
-  };
-
   const handleCodeChange = useCallback((value: string) => {
     setCode(value);
   }, []);
-
-  const extractFunctions = (code: string) => {
-    const functionRegex = /function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g;
-    let match;
-    const functions: {name: string; body: string; params: string[]} = [];
-    const names: string[] = [];
-
-    while ((match = functionRegex.exec(code)) !== null) {
-      const name = match[1];
-      const params = match[2].split(',').map(p => p.trim());
-      const body = match[3].trim();
-      functions.push({name, params, body});
-      names.push(name);
-    }
-    return {functions, names};
-  };
 
   const handleRunCode = async () => {
     try {
       // Directly evaluate the code and set the output.
       // This assumes the code directly sets the 'output' variable.
-      // eslint-disable-next-line no-eval
-      eval(code);
-      setOutput(window.output || []);
+      // Create a local scope for execution
+      const localScope = { setOutput: (data: any[]) => setOutput(data) };
+      // Create a function with the provided code and the local scope
+      const executeCode = new Function('localScope', `with (localScope) { ${code} }`);
+      // Execute the code within the local scope
+      executeCode(localScope);
       setFunctionNames(['Output']); // Display a default name
     } catch (e: any) {
       setOutput([`Error: ${e.message}`]);
       setFunctionNames(['Error']);
-    }
-  };
-
-  const handleGenerateCode = async (description: string) => {
-    try {
-      const result = await generateCodeFromDescription({description});
-      setCode(result.code);
-      toast({
-        title: 'Code Generated',
-        description: 'Code has been generated from the description.',
-      });
-    } catch (e: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error generating code',
-        description: e.message,
-      });
     }
   };
 
@@ -134,74 +81,6 @@ export default function Home() {
         description: e.message,
       });
     }
-  };
-
-  const handleSaveNote = async () => {
-    try {
-      if (selectedNote) {
-        // Update existing note
-        const noteRef = doc(db, 'notes', selectedNote.id);
-        await updateDoc(noteRef, {
-          code: code,
-          title: selectedNote.title,
-        });
-        toast({
-          title: 'Note Updated',
-          description: 'The note has been updated successfully.',
-        });
-      } else {
-        // Save as a new note
-        if (!newNoteTitle.trim()) {
-          toast({
-            variant: 'destructive',
-            title: 'Error saving note',
-            description: 'Please enter a title for the note.',
-          });
-          return;
-        }
-        await addDoc(collection(db, 'notes'), {
-          title: newNoteTitle,
-          code: code,
-        });
-        toast({
-          title: 'Note Saved',
-          description: 'The note has been saved successfully.',
-        });
-        setNewNoteTitle(''); // Reset the new note title
-      }
-      await loadNotes(); // Reload notes to update the list
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error saving note',
-        description: error.message,
-      });
-    }
-  };
-
-  const handleDeleteNote = async (noteId: string) => {
-    try {
-      const noteRef = doc(db, 'notes', noteId);
-      await deleteDoc(noteRef);
-      toast({
-        title: 'Note Deleted',
-        description: 'The note has been deleted successfully.',
-      });
-      await loadNotes(); // Reload notes to update the list
-      setSelectedNote(null); // Clear the selected note
-      setCode(''); // Clear the code editor
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Error deleting note',
-        description: error.message,
-      });
-    }
-  };
-
-  const handleNoteSelect = (note: Note) => {
-    setSelectedNote(note);
-    setCode(note.code);
   };
 
   return (
@@ -244,74 +123,6 @@ export default function Home() {
                   />
                 </div>
               ))}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Note Management Section */}
-      <div className="flex p-4 space-x-4">
-        <Card className="w-1/4 shadow-md">
-          <CardHeader>
-            <CardTitle>Notes</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col space-y-2">
-            <div className="flex space-x-2">
-              <Input
-                type="text"
-                placeholder="New note title"
-                value={newNoteTitle}
-                onChange={e => setNewNoteTitle(e.target.value)}
-              />
-              <Button onClick={handleSaveNote} className="bg-primary text-primary-foreground hover:bg-primary/80">
-                {selectedNote ? 'Update Note' : 'Save Note'}
-              </Button>
-            </div>
-            {notes.map(note => (
-              <div key={note.id} className="flex items-center justify-between">
-                <Button
-                  variant="link"
-                  onClick={() => handleNoteSelect(note)}
-                >
-                  {note.title}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleDeleteNote(note.id)}
-                >
-                  <Icons.trash className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Code Generation Section */}
-        <div className="w-3/4">
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle>Generate Code from Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col space-y-2">
-                <Textarea
-                  placeholder="Enter a description for the code you want to generate..."
-                  className="bg-background text-black rounded-md border border-input px-3 py-2 w-full resize-none"
-                  onKeyDown={async e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      await handleGenerateCode((e.target as HTMLTextAreaElement).value);
-                    }
-                  }}
-                />
-                <Button onClick={async e => {
-                  const textarea = e.target?.parentElement?.querySelector('textarea');
-                  if (textarea) {
-                    await handleGenerateCode(textarea.value);
-                  }
-                }} className="bg-primary text-primary-foreground hover:bg-primary/80">Generate Code</Button>
-              </div>
             </CardContent>
           </Card>
         </div>
