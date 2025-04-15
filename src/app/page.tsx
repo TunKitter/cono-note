@@ -90,40 +90,15 @@ export default function Home() {
 
   const handleRunCode = async () => {
     try {
-      const {functions, names} = extractFunctions(code);
-      setFunctionNames(names);
-      const results: string[] = [];
-
-      // Create a global scope for the functions
-      const globalScope: {[key: string]: any} = {};
-      functions.forEach(func => {
-        try {
-          // eslint-disable-next-line no-new-func
-          const fn = new Function(...func.params, func.body);
-          globalScope[func.name] = fn;
-        } catch (e: any) {
-          results.push(`Error defining ${func.name}: ${e.message}`);
-        }
-      });
-
-      // Execute each function within the same global scope
-      functions.forEach(func => {
-        try {
-          const fn = globalScope[func.name];
-          if (typeof fn === 'function') {
-            const result = fn();
-            results.push(String(result));
-          } else {
-            results.push(`Error: ${func.name} is not a function`);
-          }
-        } catch (e: any) {
-          results.push(`Error executing ${func.name}: ${e.message}`);
-        }
-      });
-
-      setOutput(results);
+      // Directly evaluate the code and set the output.
+      // This assumes the code directly sets the 'output' variable.
+      // eslint-disable-next-line no-eval
+      eval(code);
+      setOutput(window.output || []);
+      setFunctionNames(['Output']); // Display a default name
     } catch (e: any) {
       setOutput([`Error: ${e.message}`]);
+      setFunctionNames(['Error']);
     }
   };
 
