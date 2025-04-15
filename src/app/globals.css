@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,14 +9,14 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --background: 0 0% 96.1%; /* Light gray (#f0f0f0) */
+    --foreground: 0 0% 100%; /* White */
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 180 100% 25%; /* Teal (#008080) */
+    --primary-foreground: 0 0% 100%; /* White */
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
@@ -41,6 +42,9 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --code-editor-background: 240 3.8% 32.4%; /* #505155 */
+    --code-editor-text: 0 0% 100%; /* White */
+    --code-editor-font: 'Jetbrains Mono', monospace;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -75,6 +79,9 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --code-editor-background: 240 3.8% 32.4%; /* #505155 */
+    --code-editor-text: 0 0% 100%; /* White */
+    --code-editor-font: 'Jetbrains Mono', monospace;
   }
 }
 
@@ -86,3 +93,4 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
