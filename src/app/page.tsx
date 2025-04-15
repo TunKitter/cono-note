@@ -1,4 +1,3 @@
-
 'use client';
 
 import {useState, useCallback} from 'react';
@@ -105,7 +104,7 @@ export default function Home() {
         <div className="w-1/2 p-4">
           <Card className="h-full bg-[var(--code-editor-background)] text-[var(--code-editor-text)] font-[var(--code-editor-font)] shadow-md">
             <CardHeader>
-              <CardTitle>Code Editor</CardTitle>
+              <CardTitle className="text-black">Code Editor</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col h-[calc(100%-80px)]">
               <CodeEditor value={code} onChange={handleCodeChange} />
