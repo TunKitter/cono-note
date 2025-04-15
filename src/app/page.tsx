@@ -33,7 +33,7 @@ export default function Home() {
   const extractFunctions = (code: string) => {
     const functionRegex = /function\s+([a-zA-Z0-9_$]+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g;
     let match;
-    const functions: {name: string; body: string; params: string[]}[] = [];
+    const functions: {name: string; body: string; params: string[]} = [];
     const names: string[] = [];
 
     while ((match = functionRegex.exec(code)) !== null) {
@@ -61,7 +61,6 @@ export default function Home() {
         try {
           // eslint-disable-next-line no-new-func
           const fn = new Function(...func.params, func.body);
-          (window as any)[func.name] = fn; // Attach function to window
           globalScope[func.name] = fn;
         } catch (e: any) {
           results.push(`Error defining ${func.name}: ${e.message}`);
@@ -71,7 +70,7 @@ export default function Home() {
       // Then, execute each function and store the results
       functions.forEach(func => {
         try {
-          const fn = (window as any)[func.name]; // Retrieve the function from window
+          const fn = globalScope[func.name];
           if (typeof fn === 'function') {
             const result = fn();
             results.push(String(result));
@@ -178,7 +177,7 @@ export default function Home() {
             <div className="flex flex-col space-y-2">
               <Textarea
                 placeholder="Enter a description for the code you want to generate..."
-                className="bg-background text-foreground rounded-md border border-input px-3 py-2 w-full resize-none"
+                className="bg-background text-black rounded-md border border-input px-3 py-2 w-full resize-none"
                 onKeyDown={async e => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -199,3 +198,4 @@ export default function Home() {
     </div>
   );
 }
+
